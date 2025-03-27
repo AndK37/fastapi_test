@@ -15,11 +15,11 @@ def read_about_me():
         'alive': True
     }
 
-@app.get('/rand10')
+@app.get('/rnd')
 def get_random_int():
     return randint(1, 10)
 @app.get('/triangle')
-def get_triangle_s(a:int = Query(gt=0), b:int = Query(gt=0), c:int = Query(gt=0)):
+def get_triangle_square(a:int = Query(gt=0), b:int = Query(gt=0), c:int = Query(gt=0)):
     if a > b + c:
         return {'err': 'not exist'}
     if b > a + c:
