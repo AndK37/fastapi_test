@@ -26,14 +26,14 @@ with Session(bind=engine) as session:
                      year=2014, 
                      duration=169,
                      rating=8.7, 
-                     poster='https://www.kinopoisk.ru/picture/2769180/', 
+                     poster='', 
                      genres=[g1, g2, g3])
 
     f2 = models.Film(name='Матрица', 
                      year=1999, 
                      duration=136,
                      rating=8.5, 
-                     poster='https://www.kinopoisk.ru/picture/1896646/', 
+                     poster='', 
                      genres=[g1, g4])
     
 

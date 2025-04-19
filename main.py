@@ -1,15 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile
 from database import get_db
 from sqlalchemy.orm import Session
 import models
-from typing import List
+from typing import List, IO
 import pyd
-
-
+from datetime import datetime
 
 app = FastAPI()
-
-
 
 @app.get('/movies', response_model=List[pyd.BaseFilmShort])
 def get_all_films(db: Session=Depends(get_db)):
@@ -31,15 +28,68 @@ def get_film_by_id(id: int, db: Session=Depends(get_db)):
 
 @app.post('/movies', response_model=pyd.FilmSchema)
 def create_film(film: pyd.CreateFilm, db: Session=Depends(get_db)):
-    pass
+    film_db = models.Film()
+    film_db.name = film.name
+    film_db.year = film.year
+    film_db.duration = film.duration
+    film_db.rating = film.rating
+    film_db.desc = film.desc
+
+    for genre in film.genres:
+        film_db.genres.append(db.query(models.Genre).filter(models.Genre.id == genre).first())
+
+    db.add(film_db)
+    db.commit()
+
+    return film_db
 
 @app.put('/movies/{id}', response_model=pyd.FilmSchema)
-def update_film(db: Session=Depends(get_db)):
-    pass
+def update_film(id: int, film: pyd.CreateFilm, db: Session=Depends(get_db)):
+    film_db = db.query(models.Film).filter(models.Film.id == id).first()
+    if not film_db:
+        raise HTTPException(404, "Фильм не найден")
+    
+    film_db.name = film.name
+    film_db.year = film.year
+    film_db.duration = film.duration
+    film_db.rating = film.rating
+    film_db.desc = film.desc
+
+    g = []
+    for genre in film.genres:
+        g.append(db.query(models.Genre).filter(models.Genre.id == genre).first())
+
+    film_db.genres = g
+
+    db.commit()
+
+    return film_db
 
 @app.put('/movies/{id}/image', response_model=pyd.FilmSchema)
-def update_film_poster(db: Session=Depends(get_db)):
-    pass
+def update_film_poster(id: int, file: UploadFile, db: Session=Depends(get_db)):
+    allowed_formats = ['image/png', 'image/jpeg']
+
+    if file.content_type not in allowed_formats:
+        raise HTTPException(400, 'Неправильный формат')
+    
+    if file.size > 2097152:
+        raise HTTPException(400, 'Файл больше 2mb')
+    
+    file.filename = str(datetime.now().timestamp()).replace('.', '0')
+
+    file_dir = f"./img/{file.filename}.{file.content_type[6:]}"
+    with open(file_dir, "wb+") as file_object:
+        file_object.write(file.file.read())
+
+    film = db.query(models.Film).filter(models.Film.id == id).first()
+
+    if not film:
+        raise HTTPException(404, "Фильм не найден")
+    
+    film.poster = file_dir
+    db.commit()
+
+    return film
 
 @app.delete('/movies/{id}')
 def delete_film(id: int, db: Session=Depends(get_db)):
@@ -51,7 +101,6 @@ def delete_film(id: int, db: Session=Depends(get_db)):
     db.commit()
 
     return {'msg': 'Удалено'}
-
 
 @app.get('/genres', response_model=List[pyd.BaseGenre])
 def get_all_genres(db: Session=Depends(get_db)):
@@ -74,7 +123,4 @@ def create_genre(genre: pyd.CreateGenre, db: Session=Depends(get_db)):
     db.commit()
 
     return genre_db
-
-
-
 

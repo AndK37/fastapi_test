@@ -18,7 +18,7 @@ class Film(Base):
     duration = Column(Integer)
     rating = Column(Float)
     desc = Column(Text, default=None)
-    poster = Column(String(255))
+    poster = Column(String(255), default='')
     add_date = Column(Date, default=date.today)
 
     genres = relationship('Genre', secondary='film_genre', backref='films')

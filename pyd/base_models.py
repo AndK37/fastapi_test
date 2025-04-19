@@ -14,7 +14,7 @@ class BaseFilm(BaseModel):
     duration: int = Field(example=169)
     rating: float = Field(example=8.7)
     desc: str | None = Field(example='Когда засуха, пыльные бури и вымирание растений приводят человечество к продовольственному кризису, коллектив исследователей и учёных отправляется сквозь червоточину (которая предположительно соединяет области пространства-времени через большое расстояние) в путешествие, чтобы превзойти прежние ограничения для космических путешествий человека и найти планету с подходящими для человечества условиями.', default=None)
-    poster: str = Field(example='https://www.kinopoisk.ru/picture/2769180/')
+    poster: str = Field(example='./img/1.png')
     add_date: date = Field(example=date(2025, 4, 19))
 
 class BaseGenre(BaseModel):
