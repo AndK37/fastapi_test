@@ -1,36 +1,80 @@
-from fastapi import FastAPI, Query
-from random import randint
+from fastapi import FastAPI, HTTPException, Depends
+from database import get_db
+from sqlalchemy.orm import Session
+import models
+from typing import List
+import pyd
+
+
 
 app = FastAPI()
 
-@app.get('/')
-def read_root():
-    return {'hello': 'world', 'goodbye': 'world'}
 
-@app.get('/about_me')
-def read_about_me():
-    return {
-        'name': 'Andrey',
-        'age': 20,
-        'alive': True
-    }
 
-@app.get('/rnd')
-def get_random_int():
-    return randint(1, 10)
+@app.get('/movies', response_model=List[pyd.BaseFilmShort])
+def get_all_films(db: Session=Depends(get_db)):
+    films = db.query(models.Film).all()
 
-@app.post('/t_square')
-def get_triangle_square(a:int = Query(gt=0), b:int = Query(gt=0), c:int = Query(gt=0)):
-    if a > b + c:
-        return {'err': 'not exist'}
-    if b > a + c:
-        return {'err': 'not exist'}
-    if c > b + a:
-        return {'err': 'not exist'}
+    if not films:
+        raise HTTPException(404, "Не найдено")
+
+    return films
+
+@app.get('/movies/{id}', response_model=pyd.FilmSchema)
+def get_film_by_id(id: int, db: Session=Depends(get_db)):
+    film = db.query(models.Film).filter(models.Film.id == id).first()
+
+    if not film:
+        raise HTTPException(404, "Фильм не найден")
+
+    return film
+
+@app.post('/movies', response_model=pyd.FilmSchema)
+def create_film(film: pyd.CreateFilm, db: Session=Depends(get_db)):
+    pass
+
+@app.put('/movies/{id}', response_model=pyd.FilmSchema)
+def update_film(db: Session=Depends(get_db)):
+    pass
+
+@app.put('/movies/{id}/image', response_model=pyd.FilmSchema)
+def update_film_poster(db: Session=Depends(get_db)):
+    pass
+
+@app.delete('/movies/{id}')
+def delete_film(id: int, db: Session=Depends(get_db)):
+    film = db.query(models.Film).filter(models.Film.id == id).first()
+    if not film:
+        raise HTTPException(404, 'Фильм не найден')
     
-    p = (a + b + c) / 2
-    S = (p * (p - a) * (p - b) * (p - c))**0.5
+    db.delete(film)
+    db.commit()
 
-    return {'a': a, 'b': b, 'c': c, 'p': p, 'S': S}
+    return {'msg': 'Удалено'}
+
+
+@app.get('/genres', response_model=List[pyd.BaseGenre])
+def get_all_genres(db: Session=Depends(get_db)):
+    genres = db.query(models.Genre).all()
+
+    return genres
+
+@app.post('/genres', response_model=pyd.BaseGenre)
+def create_genre(genre: pyd.CreateGenre, db: Session=Depends(get_db)):
+    genre_db = db.query(models.Genre).filter(models.Genre.name == genre.name).first()
+    if genre_db:
+        raise HTTPException(400, 'Уже существует')
+    
+    genre_db = models.Genre()
+
+    genre_db.name = genre.name
+    genre_db.desc = genre.desc
+
+    db.add(genre_db)
+    db.commit()
+
+    return genre_db
+
+
 
 
