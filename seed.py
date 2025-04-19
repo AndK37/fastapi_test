@@ -2,13 +2,15 @@ from sqlalchemy.orm import Session
 from database import engine
 import models
 from datetime import date
-
+import os
 
 
 models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 with Session(bind=engine) as session:
+    os.mkdir('img')
+
     g1 = models.Genre(name='фантастика',
                       desc='Направление и жанр художественной кинематографии, который можно охарактеризовать повышенным уровнем условности.')
 

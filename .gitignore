@@ -2,4 +2,4 @@
 .env
 *.sqlite
 __pycache__
-img/
+img/*
