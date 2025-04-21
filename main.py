@@ -36,7 +36,11 @@ def create_film(film: pyd.CreateFilm, db: Session=Depends(get_db)):
     film_db.desc = film.desc
 
     for genre in film.genres:
-        film_db.genres.append(db.query(models.Genre).filter(models.Genre.id == genre).first())
+        genre_db = db.query(models.Genre).filter(models.Genre.id == genre).first()
+        if genre_db:
+            film_db.genres.append(genre_db)
+        else:
+            raise HTTPException(400, 'Неправильный жанр')
 
     db.add(film_db)
     db.commit()
@@ -55,11 +59,15 @@ def update_film(id: int, film: pyd.CreateFilm, db: Session=Depends(get_db)):
     film_db.rating = film.rating
     film_db.desc = film.desc
 
-    g = []
+    new_genres = []
     for genre in film.genres:
-        g.append(db.query(models.Genre).filter(models.Genre.id == genre).first())
-
-    film_db.genres = g
+        genre_db = db.query(models.Genre).filter(models.Genre.id == genre).first()
+        if genre_db:
+            new_genres.append(genre_db)
+        else:
+            raise HTTPException(400, 'Неправильный жанр')
+            
+    film_db.genres = new_genres
 
     db.commit()
 
