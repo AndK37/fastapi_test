@@ -1,12 +1,22 @@
 from fastapi import FastAPI, HTTPException, Depends, UploadFile
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from database import get_db
 from sqlalchemy.orm import Session
 import models
-from typing import List, IO
+from typing import List
 import pyd
 from datetime import datetime
 
 app = FastAPI()
+
+security = HTTPBasic()
+
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = credentials.username == "admin"
+    correct_password = credentials.password == "admin"
+    if not (correct_username and correct_password):
+        raise HTTPException(401)
+    return credentials.username
 
 @app.get('/movies', response_model=List[pyd.BaseFilmShort])
 def get_all_films(db: Session=Depends(get_db)):
@@ -27,7 +37,7 @@ def get_film_by_id(id: int, db: Session=Depends(get_db)):
     return film
 
 @app.post('/movies', response_model=pyd.FilmSchema)
-def create_film(film: pyd.CreateFilm, db: Session=Depends(get_db)):
+def create_film(film: pyd.CreateFilm, db: Session=Depends(get_db), user: str = Depends(verify_credentials)):
     film_db = models.Film()
     film_db.name = film.name
     film_db.year = film.year
@@ -48,7 +58,7 @@ def create_film(film: pyd.CreateFilm, db: Session=Depends(get_db)):
     return film_db
 
 @app.put('/movies/{id}', response_model=pyd.FilmSchema)
-def update_film(id: int, film: pyd.CreateFilm, db: Session=Depends(get_db)):
+def update_film(id: int, film: pyd.CreateFilm, db: Session=Depends(get_db), user: str = Depends(verify_credentials)):
     film_db = db.query(models.Film).filter(models.Film.id == id).first()
     if not film_db:
         raise HTTPException(404, "Фильм не найден")
@@ -74,7 +84,7 @@ def update_film(id: int, film: pyd.CreateFilm, db: Session=Depends(get_db)):
     return film_db
 
 @app.put('/movies/{id}/image', response_model=pyd.FilmSchema)
-def update_film_poster(id: int, file: UploadFile, db: Session=Depends(get_db)):
+def update_film_poster(id: int, file: UploadFile, db: Session=Depends(get_db), user: str = Depends(verify_credentials)):
     allowed_formats = ['image/png', 'image/jpeg']
 
     if file.content_type not in allowed_formats:
@@ -100,7 +110,7 @@ def update_film_poster(id: int, file: UploadFile, db: Session=Depends(get_db)):
     return film
 
 @app.delete('/movies/{id}')
-def delete_film(id: int, db: Session=Depends(get_db)):
+def delete_film(id: int, db: Session=Depends(get_db), user: str = Depends(verify_credentials)):
     film = db.query(models.Film).filter(models.Film.id == id).first()
     if not film:
         raise HTTPException(404, 'Фильм не найден')
@@ -117,7 +127,7 @@ def get_all_genres(db: Session=Depends(get_db)):
     return genres
 
 @app.post('/genres', response_model=pyd.BaseGenre)
-def create_genre(genre: pyd.CreateGenre, db: Session=Depends(get_db)):
+def create_genre(genre: pyd.CreateGenre, db: Session=Depends(get_db), user: str = Depends(verify_credentials)):
     genre_db = db.query(models.Genre).filter(models.Genre.name == genre.name).first()
     if genre_db:
         raise HTTPException(400, 'Уже существует')
