@@ -21,3 +21,7 @@ class BaseGenre(BaseModel):
     id: int = Field(example=1)
     name: str = Field(example='фантастика')
     desc: str | None = Field(example='Направление и жанр художественной кинематографии, который можно охарактеризовать повышенным уровнем условности.')
+
+class BaseUser(BaseModel):
+    id: int = Field(example=1)
+    login: str = Field(example='qwerty')

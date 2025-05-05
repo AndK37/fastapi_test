@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
+import re
 
 
 
@@ -14,3 +15,7 @@ class CreateFilm(BaseModel):
     rating: float = Field(example=8.7, ge=0.0, le=10.0)
     desc: str | None = Field(example='Когда засуха, пыльные бури и вымирание растений приводят человечество к продовольственному кризису, коллектив исследователей и учёных отправляется сквозь червоточину (которая предположительно соединяет области пространства-времени через большое расстояние) в путешествие, чтобы превзойти прежние ограничения для космических путешествий человека и найти планету с подходящими для человечества условиями.', default=None)
     genres: List[int] | None = Field(default=[1])
+
+class CreateUser(BaseModel):
+    login: str = Field(example='qwerty', min_length=1, max_length=32)
+    password: str = Field(example='qwertyqwerty', max_length=32, pattern=re.compile("^.*(?=.{8,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=]).*$"))
