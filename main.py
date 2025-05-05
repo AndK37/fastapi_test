@@ -6,17 +6,41 @@ import models
 from typing import List
 import pyd
 from datetime import datetime
+import hashlib
 
 app = FastAPI()
 
 security = HTTPBasic()
 
-def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = credentials.username == "admin"
-    correct_password = credentials.password == "admin"
-    if not (correct_username and correct_password):
-        raise HTTPException(401)
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security), db: Session=Depends(get_db)):
+    user_db =  db.query(models.User).filter(models.User.login == credentials.username).first()
+    if not user_db:
+        raise HTTPException(404, 'User Not Exist')
+    if hash_password(credentials.password) != user_db.password:
+        raise HTTPException(401, "Unvalid credentials")
+    
     return credentials.username
+
+def hash_password(password):
+    h = hashlib.new('SHA256')
+    h.update(password.encode())
+    p_h = h.hexdigest()
+    return p_h
+
+@app.post('/users', response_model=pyd.BaseUser)
+def create_user(user: pyd.CreateUser, db: Session=Depends(get_db)):
+    user_db = db.query(models.User).filter(models.User.login == user.login).first()
+    if user_db:
+        raise HTTPException(400, "Already Exist")
+    user_db = models.User()
+
+    user_db.login = user.login
+    user_db.password = hash_password(user.password)
+
+    db.add(user_db)
+    db.commit()
+    
+    return user_db
 
 @app.get('/movies', response_model=List[pyd.BaseFilmShort])
 def get_all_films(db: Session=Depends(get_db)):

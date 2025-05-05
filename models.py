@@ -31,3 +31,8 @@ class Genre(Base):
 
     # films = relationship('Films', secondary='film_genre', back_populates='genres')
 
+class User(Base):
+    __tablename__ = 'users'
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    login = Column(String(255), unique=True, nullable=False)
+    password  = Column(String(255), unique=False, nullable=False)
